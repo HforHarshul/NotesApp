@@ -39,6 +39,7 @@ struct ContentView: View {
 			Button("Save"){ saveNote() }
 			Button("Save As") { saveNoteAs() }
 			Button("Load"){ loadNote() }
+			Button("Reveal in Finder") { revealInFinder() }
 		}
 		Text(saveMessage)
 			.font(.caption)
@@ -111,6 +112,15 @@ struct ContentView: View {
 			}
 		}
 		
+	}
+	
+	func revealInFinder(){
+		if manager.fileExists(atPath: fileURL.path){
+			NSWorkspace.shared.activateFileViewerSelecting([fileURL])
+		} else {
+			let folderURL = fileURL.deletingLastPathComponent()
+			NSWorkspace.shared.activateFileViewerSelecting([folderURL])
+		}
 	}
 }
 

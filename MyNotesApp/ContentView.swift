@@ -11,16 +11,16 @@ internal import UniformTypeIdentifiers
 struct ContentView: View {
 	@State private var noteText: String = ""
 	@State private var saveMessage: String = ""
-	
+
 	let manager = FileManager.default
 
 	var fileURL: URL{
 		let docs = manager.urls(for: .documentDirectory, in: .userDomainMask).first!
 		return docs.appendingPathComponent("notes.txt", conformingTo: .plainText)
 	}
-	
+
     var body: some View {
-		
+
         VStack {
 			// TODO: add options to change font style and size
 			// TODO: add "File" dropdown button with optios: "Save", "SaveAs", "Open", "Close"
@@ -28,27 +28,38 @@ struct ContentView: View {
 			// TODO: add "Format" dropdown with options: "Font Style", "Font Size"
 			// TODO: add "Window" dropdown with options: "Minimise", "Maximise", "Centre"
 			// NOTE: in Swift, String data-type holds unformatted string data only. Formatting info is saved as metadata (eg: index 0:5=>Bold, 6:8:Italic, etc) along with the text. To do that use AttributedString var instead of String var
-			
+
 			TextEditor(text: $noteText)
 				.border(Color.gray)
 				.frame(minWidth: 600.0, minHeight: 400.0)
         }
-		
-		
+
 		HStack{
-			Button("Save"){ saveNote() }
-			Button("Save As") { saveNoteAs() }
-			Button("Load"){ loadNote() }
-			Button("Reveal in Finder") { revealInFinder() }
+			// system symbols: command + shift + L
+			Button(action: saveNote){
+				Label("Save", systemImage: "square.and.arrow.down.fill")
+			}.buttonStyle(.borderedProminent)
+
+			Button(action: saveNoteAs){
+				Label("Save As", systemImage: "square.and.arrow.down.badge.checkmark.fill")
+			}.buttonStyle(.borderedProminent)
+
+			Button(action: loadNote){
+				Label("Load", systemImage: "document.circle.fill")
+			}.buttonStyle(.borderedProminent)
+
+			Button(action: revealInFinder){
+				Label("Reveal in Finder", systemImage: "folder.fill")
+			}.buttonStyle(.borderedProminent)
 		}
 		Text(saveMessage)
 			.font(.caption)
 			.foregroundStyle(.green)
-		
+
         .padding()
 		.onAppear{} // this gets called whenever this view appears, i.e. whenever we navigate to this screen. It triggers every time we switch away from this view and come back to this view. It's not always one-time per app runtime (except for cases when a view is always shown only once in an app lifecycle)
     }
-	
+
 	func saveNote(){
 		do{
 			try noteText.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -63,12 +74,12 @@ struct ContentView: View {
 			print(saveText)
 		}
 	}
-	
+
 	func loadNote(){
 		if manager.fileExists(atPath: fileURL.path){
 			do{
 				noteText = try String(contentsOf: fileURL, encoding: .utf8)
-				
+
 				// TODO: add a popup to show the success msg to the user
 				let loadText = "Successfully loaded from file at: \(fileURL.path())"
 				saveMessage = loadText
@@ -86,7 +97,7 @@ struct ContentView: View {
 			print(loadText)
 		}
 	}
-	
+
 	func saveNoteAs(){
 		let panel = NSSavePanel()
 		panel.title = "Save Note As"
@@ -95,7 +106,7 @@ struct ContentView: View {
 		panel.allowedContentTypes = [.plainText]
 		panel.allowsOtherFileTypes = true
 		panel.canCreateDirectories = true
-		
+
 		panel.begin(){ response in
 			guard response == .OK, let url = panel.url else{
 				return
@@ -111,9 +122,8 @@ struct ContentView: View {
 				print(saveText)
 			}
 		}
-		
 	}
-	
+
 	func revealInFinder(){
 		if manager.fileExists(atPath: fileURL.path){
 			NSWorkspace.shared.activateFileViewerSelecting([fileURL])

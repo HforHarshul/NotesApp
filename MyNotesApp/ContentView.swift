@@ -6,13 +6,18 @@
 //
 
 import SwiftUI
+internal import UniformTypeIdentifiers
 
 struct ContentView: View {
 	@State private var noteText: String = ""
+	var fileURL: URL{
+		let manager = FileManager.default
+		let docs = manager.urls(for: .documentDirectory, in: .userDomainMask).first!
+		return docs.appendingPathComponent("notes.txt", conformingTo: .plainText)
+	}
+	
     var body: some View {
-		HStack{
-			Button("label"){}
-		}
+		
         VStack {
 			// TODO: add options to change font style and size
 			// TODO: add "File" dropdown button with optios: "Save", "SaveAs", "Open", "Close"
@@ -25,8 +30,28 @@ struct ContentView: View {
 				.border(Color.gray)
 				.frame(minWidth: 600.0, minHeight: 400.0)
         }
+		
+		
+		HStack{
+			Button("Save"){ saveNote() }
+			Button("Load"){ loadNote() }
+		}
+		
         .padding()
     }
+	
+	func saveNote(){
+		do{
+			try noteText.write(to: fileURL, atomically: true, encoding: .utf8)
+			print("Note saved at: ", fileURL.path())
+		}catch{
+			print("Failed to save note: ", error.localizedDescription)
+		}
+	}
+	
+	func loadNote(){
+		
+	}
 }
 
 #Preview {

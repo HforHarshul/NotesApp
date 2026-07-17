@@ -37,6 +37,7 @@ struct ContentView: View {
 		
 		HStack{
 			Button("Save"){ saveNote() }
+			Button("Save As") { saveNoteAs() }
 			Button("Load"){ loadNote() }
 		}
 		Text(saveMessage)
@@ -83,6 +84,33 @@ struct ContentView: View {
 			saveMessage = loadText
 			print(loadText)
 		}
+	}
+	
+	func saveNoteAs(){
+		let panel = NSSavePanel()
+		panel.title = "Save Note As"
+		panel.showsHiddenFiles = true
+		panel.nameFieldStringValue = "Untitled.txt"
+		panel.allowedContentTypes = [.plainText]
+		panel.allowsOtherFileTypes = true
+		panel.canCreateDirectories = true
+		
+		panel.begin(){ response in
+			guard response == .OK, let url = panel.url else{
+				return
+			}
+			do {
+				try noteText.write(to: url, atomically: true, encoding: .utf8)
+				let saveText = "Note saved at: \(url.path())"
+				saveMessage = saveText
+				print(saveText)
+			} catch {
+				let saveText = "Failed to save note: \(error.localizedDescription)"
+				saveMessage = saveText
+				print(saveText)
+			}
+		}
+		
 	}
 }
 

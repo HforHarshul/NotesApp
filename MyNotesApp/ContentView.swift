@@ -10,8 +10,11 @@ internal import UniformTypeIdentifiers
 
 struct ContentView: View {
 	@State private var noteText: String = ""
+	@State private var saveMessage: String = ""
+	
+	let manager = FileManager.default
+
 	var fileURL: URL{
-		let manager = FileManager.default
 		let docs = manager.urls(for: .documentDirectory, in: .userDomainMask).first!
 		return docs.appendingPathComponent("notes.txt", conformingTo: .plainText)
 	}
@@ -36,21 +39,50 @@ struct ContentView: View {
 			Button("Save"){ saveNote() }
 			Button("Load"){ loadNote() }
 		}
+		Text(saveMessage)
+			.font(.caption)
+			.foregroundStyle(.green)
 		
         .padding()
+		.onAppear{} // this gets called whenever this view appears, i.e. whenever we navigate to this screen. It triggers every time we switch away from this view and come back to this view. It's not always one-time per app runtime (except for cases when a view is always shown only once in an app lifecycle)
     }
 	
 	func saveNote(){
 		do{
 			try noteText.write(to: fileURL, atomically: true, encoding: .utf8)
-			print("Note saved at: ", fileURL.path())
+			// TODO: add a popup to let the user know the path where the note was saved
+			let saveText = "Note saved at: \(fileURL.path())"
+			saveMessage = saveText
+			print(saveText)
 		}catch{
-			print("Failed to save note: ", error.localizedDescription)
+			// TODO: add a popup to show the error to the user
+			let saveText = "Failed to save note: \(error.localizedDescription)"
+			saveMessage = saveText
+			print(saveText)
 		}
 	}
 	
 	func loadNote(){
-		
+		if manager.fileExists(atPath: fileURL.path){
+			do{
+				noteText = try String(contentsOf: fileURL, encoding: .utf8)
+				
+				// TODO: add a popup to show the success msg to the user
+				let loadText = "Successfully loaded from file at: \(fileURL.path())"
+				saveMessage = loadText
+				print(loadText)
+			}catch{
+				// TODO: add a popup to show the error to the user
+				let loadText = "Load failed: \(error.localizedDescription)"
+				saveMessage = loadText
+				print(loadText)
+			}
+		} else {
+			// TODO: add a popup to show the error to the user
+			let loadText = "No save file found at: \(fileURL.path())"
+			saveMessage = loadText
+			print(loadText)
+		}
 	}
 }
 

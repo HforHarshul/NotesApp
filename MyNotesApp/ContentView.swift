@@ -8,12 +8,13 @@
 import SwiftUI
 
 struct ContentView: View {
+	@State private var noteText: String = ""
     var body: some View {
         VStack {
-            Image(systemName: "globe")
-                .imageScale(.large)
-                .foregroundStyle(.tint)
-            Text("Hello, world!")
+			// TODO: add options to change font style and size
+			TextEditor(text: $noteText)
+				.border(Color.gray)
+				.frame(minWidth: 600.0, minHeight: 400.0)
         }
         .padding()
     }

@@ -79,6 +79,49 @@ struct MyNotesAppApp: App {
 			}
 
             // Format -> Font, Font Size, Font Style (bold/italic/etc)
+			CommandMenu("Format"){
+				// Font - figure this out later
+//				CommandMenu("Format") {
+//					Picker("Font", selection: $fontName) {
+//						Text("System").tag("System")
+//						Text("Georgia").tag("Georgia")
+//						Text("Helvetica").tag("Helvetica")
+//						Text("Courier New").tag("Courier New")
+//					}
+//				}
+
+				
+				// Font Size
+				Menu("Font Size"){
+					Button("Increase") {
+						// implementation
+					}.keyboardShortcut("+", modifiers: .command)
+
+					Button("Decrease") {
+						// implementation
+					}.keyboardShortcut("-", modifiers: .command)
+				}
+				
+				// Font Style
+				Menu("Font Style"){
+					// action to apply styling like bold/italic/etc to selected text -> sub menu with these options
+					Button("Bold") {
+						// implementation
+					}.keyboardShortcut("b", modifiers: .command)
+
+					Button("Italic") {
+						// implementation
+					}.keyboardShortcut("i", modifiers: .command)
+					
+					Button("Underline") {
+						// implementation
+					}.keyboardShortcut("u", modifiers: .command)
+					
+					Button("Strikethrough") {
+						// implementation
+					}.keyboardShortcut("u", modifiers: [.command, .shift])
+				}
+			}
 		}
     }
 }

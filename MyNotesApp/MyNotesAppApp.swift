@@ -14,7 +14,7 @@ struct MyNotesAppApp: App {
             ContentView()
         }
 		.commands{
-			// File -> New Note Window, New Note Tab, Open Note, Save Note, Save Note As, Share, Print
+			// File -> New Note Window, New Note Tab, Open Note, Save Note, Save Note As, Share Note, Print Note
 			CommandGroup(replacing: .newItem) {
 				// New Note Window
 				Button("New Note Window"){
@@ -44,13 +44,39 @@ struct MyNotesAppApp: App {
 				Button("Save Note As"){
 					// action to save a new or existing note
 				}.keyboardShortcut("s", modifiers: [.command, .shift])
+				
+				Divider()
+				
+				// Share Note
+				Button("Share Note"){
+					// action to trigger the Share popup
+				}.keyboardShortcut("s", modifiers: .control)
+				
+				// Print Note
+				Button("Print Note"){
+					// action to trigger the Print popup
+				}.keyboardShortcut("p", modifiers: .command)
 
                 Divider()
 			}
 
 
-			// CommandGroup(after: <#T##CommandGroupPlacement#>, addition: <#T##() -> Content#>)
-			// Edit -> Find, Find and Replace
+			// Edit -> add Find, Find and Replace options
+			CommandGroup(after: .textEditing) {
+				Divider()
+				
+				// Find
+				Button("Find"){
+					// action to find a text in the note text
+				}.keyboardShortcut("f", modifiers: .command)
+				
+				// Find and Replace
+				Button("Find and Replace"){
+					// action to find and replace a text in the note text
+				}.keyboardShortcut("r", modifiers: [.command])
+				
+				Divider()
+			}
 
             // Format -> Font, Font Size, Font Style (bold/italic/etc)
 		}

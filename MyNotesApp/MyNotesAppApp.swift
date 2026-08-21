@@ -9,8 +9,11 @@ import SwiftUI
 
 @main
 struct MyNotesAppApp: App {
+    @FocusedValue(\.noteActions) var noteActions
+    @Environment(\.openWindow) var openWindow
+
     var body: some Scene {
-        WindowGroup {
+        WindowGroup(id: "note") {
             ContentView()
         }
 		.commands{
@@ -18,7 +21,7 @@ struct MyNotesAppApp: App {
 			CommandGroup(replacing: .newItem) {
 				// New Note Window
 				Button("New Note Window"){
-					// action to create a new note window
+					openWindow(id: "note")
 				}.keyboardShortcut("n", modifiers: .command)
 				
 				// New Note Tab
@@ -30,19 +33,19 @@ struct MyNotesAppApp: App {
 				
 				// Open Note
 				Button("Open Note"){
-					// action to open/load an existing notes file
+					noteActions?.openNote()
 				}.keyboardShortcut("o", modifiers: .command)
 				
 				Divider()
 				
 				// Save Note
 				Button("Save Note"){
-					// action to save a new or existing note
+					noteActions?.save()
 				}.keyboardShortcut("s", modifiers: .command)
-				
+
 				// Save Note As
 				Button("Save Note As"){
-					// action to save a new or existing note
+					noteActions?.saveAs()
 				}.keyboardShortcut("s", modifiers: [.command, .shift])
 				
 				Divider()
@@ -73,7 +76,7 @@ struct MyNotesAppApp: App {
 				// Find and Replace
 				Button("Find and Replace"){
 					// action to find and replace a text in the note text
-				}.keyboardShortcut("r", modifiers: [.command])
+				}.keyboardShortcut("f", modifiers: [.option, .command])
 				
 				Divider()
 			}
@@ -94,11 +97,11 @@ struct MyNotesAppApp: App {
 				// Font Size
 				Menu("Font Size"){
 					Button("Increase") {
-						// implementation
+						noteActions?.increaseFontSize()
 					}.keyboardShortcut("+", modifiers: .command)
 
 					Button("Decrease") {
-						// implementation
+						noteActions?.decreaseFontSize()
 					}.keyboardShortcut("-", modifiers: .command)
 				}
 				
@@ -107,19 +110,19 @@ struct MyNotesAppApp: App {
 					// action to apply styling like bold/italic/etc to selected text -> sub menu with these options
 					Button("Bold") {
 						// implementation
-					}.keyboardShortcut("b", modifiers: .command)
+					}
 
 					Button("Italic") {
 						// implementation
-					}.keyboardShortcut("i", modifiers: .command)
-					
+					}
+
 					Button("Underline") {
 						// implementation
-					}.keyboardShortcut("u", modifiers: .command)
-					
+					}
+
 					Button("Strikethrough") {
 						// implementation
-					}.keyboardShortcut("u", modifiers: [.command, .shift])
+					}
 				}
 			}
 		}

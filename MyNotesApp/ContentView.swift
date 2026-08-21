@@ -8,15 +8,39 @@
 import SwiftUI
 internal import UniformTypeIdentifiers
 
+struct NoteActions {
+    var save: () -> Void
+    var saveAs: () -> Void
+    var openNote: () -> Void
+    var increaseFontSize: () -> Void
+    var decreaseFontSize: () -> Void
+}
+
+struct NoteActionsKey: FocusedValueKey {
+    typealias Value = NoteActions
+}
+
+extension FocusedValues {
+    var noteActions: NoteActions? {
+        get { self[NoteActionsKey.self] }
+        set { self[NoteActionsKey.self] = newValue }
+    }
+}
+
 struct ContentView: View {
+	@State private var notes: [Note] = []
+	@State private var selectedNote: Note? = nil
+	@State private var fileMessage = ""
 	@State private var noteText: String = ""
 	@State private var saveMessage: String = ""
+	@State private var fontSize: CGFloat = 14
+	@State private var showingFilePicker = false
 
 	let manager = FileManager.default
 
 	var fileURL: URL{
 		let docs = manager.urls(for: .documentDirectory, in: .userDomainMask).first!
-		return docs.appendingPathComponent("notes.txt", conformingTo: .plainText)
+		return docs.appendingPathComponent("notes.json", conformingTo: .plainText)
 	}
 
     var body: some View {
@@ -25,8 +49,34 @@ struct ContentView: View {
 			// NOTE: in Swift, String data-type holds unformatted string data only. Formatting info is saved as metadata (eg: index 0:5=>Bold, 6:8:Italic, etc) along with the text. To do that use AttributedString var instead of String var
 
 			TextEditor(text: $noteText)
+				.font(.system(size: fontSize))
 				.border(Color.gray)
 				.frame(minWidth: 600.0, minHeight: 400.0)
+        }
+        .focusedSceneValue(\.noteActions, NoteActions(
+            save: saveNote,
+            saveAs: saveNoteAs,
+            openNote: openNote,
+            increaseFontSize: increaseFontSize,
+            decreaseFontSize: decreaseFontSize
+        ))
+        .fileImporter(
+            isPresented: $showingFilePicker,
+            allowedContentTypes: [.plainText]
+        ) { result in
+            switch result {
+            case .success(let url):
+                guard url.startAccessingSecurityScopedResource() else { return }
+                defer { url.stopAccessingSecurityScopedResource() }
+                do {
+                    noteText = try String(contentsOf: url, encoding: .utf8)
+                    saveMessage = "Opened file at: \(url.path())"
+                } catch {
+                    saveMessage = "Failed to open file: \(error.localizedDescription)"
+                }
+            case .failure(let error):
+                saveMessage = "Failed to open file: \(error.localizedDescription)"
+            }
         }
 
 		HStack{
@@ -54,7 +104,7 @@ struct ContentView: View {
         .padding()
 		.onAppear{} // this gets called whenever this view appears, i.e. whenever we navigate to this screen. It triggers every time we switch away from this view and come back to this view. It's not always one-time per app runtime (except for cases when a view is always shown only once in an app lifecycle)
     }
-
+	
 	func saveNote(){
 		do{
 			try noteText.write(to: fileURL, atomically: true, encoding: .utf8)
@@ -117,6 +167,18 @@ struct ContentView: View {
 				print(saveText)
 			}
 		}
+	}
+
+	func openNote() {
+		showingFilePicker = true
+	}
+
+	func increaseFontSize() {
+		fontSize = min(fontSize + 2, 72)
+	}
+
+	func decreaseFontSize() {
+		fontSize = max(fontSize - 2, 8)
 	}
 
 	func revealInFinder(){

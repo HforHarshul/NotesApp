@@ -85,6 +85,15 @@ struct ContentView: View {
 
                     TextEditor(text: $notes[index].note)
                         .font(.system(size: fontSize))
+
+                    Divider()
+
+                    let content = notes[index].note
+                    let wordCount = content.split { $0.isWhitespace }.count
+                    Text("\(wordCount) word\(wordCount == 1 ? "" : "s") · \(content.count) characters")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 .padding()
             } else {

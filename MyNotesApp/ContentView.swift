@@ -54,8 +54,14 @@ struct ContentView: View {
         NavigationSplitView {
             List(selection: $selectedNoteID) {
                 ForEach(filteredNotes) { note in
-                    Text(note.title.isEmpty ? "Untitled" : note.title)
-                        .tag(note.id)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(note.title.isEmpty ? "Untitled" : note.title)
+                            .fontWeight(.medium)
+                        Text(displayDate(note.modifiedAt))
+                            .font(.caption)
+                            .foregroundStyle(.secondary)
+                    }
+                    .tag(note.id)
                 }
                 .onDelete { indexSet in
                     let idsToDelete = indexSet.map { filteredNotes[$0].id }
@@ -80,11 +86,17 @@ struct ContentView: View {
                     TextField("Title", text: $notes[index].title)
                         .textFieldStyle(.plain)
                         .font(.title2.bold())
+                        .onChange(of: notes[index].title) {
+                            notes[index].modifiedAt = Date()
+                        }
 
                     Divider()
 
                     TextEditor(text: $notes[index].note)
                         .font(.system(size: fontSize))
+                        .onChange(of: notes[index].note) {
+                            notes[index].modifiedAt = Date()
+                        }
 
                     Divider()
 
@@ -137,6 +149,12 @@ struct ContentView: View {
         .onChange(of: notes) {
             saveNotes()
         }
+    }
+
+    private func displayDate(_ date: Date) -> String {
+        Calendar.current.isDateInToday(date)
+            ? date.formatted(date: .omitted, time: .shortened)
+            : date.formatted(date: .abbreviated, time: .omitted)
     }
 
     func addNote() {

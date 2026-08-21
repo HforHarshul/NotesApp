@@ -18,4 +18,22 @@ struct Note: Identifiable, Codable, Hashable {
 	var id = UUID()
 	var title: String
 	var note: String
+	var createdAt: Date = Date()
+	var modifiedAt: Date = Date()
+
+	enum CodingKeys: String, CodingKey {
+		case id, title, note, createdAt, modifiedAt
+	}
+}
+
+extension Note {
+	// Custom decoder so notes saved before timestamps were added still load correctly
+	init(from decoder: Decoder) throws {
+		let container = try decoder.container(keyedBy: CodingKeys.self)
+		id = try container.decode(UUID.self, forKey: .id)
+		title = try container.decode(String.self, forKey: .title)
+		note = try container.decode(String.self, forKey: .note)
+		createdAt = try container.decodeIfPresent(Date.self, forKey: .createdAt) ?? Date()
+		modifiedAt = try container.decodeIfPresent(Date.self, forKey: .modifiedAt) ?? Date()
+	}
 }

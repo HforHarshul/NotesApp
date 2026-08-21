@@ -14,6 +14,7 @@ struct NoteActions {
     var openNote: () -> Void
     var increaseFontSize: () -> Void
     var decreaseFontSize: () -> Void
+    var addNote: () -> Void
 }
 
 struct NoteActionsKey: FocusedValueKey {
@@ -28,37 +29,66 @@ extension FocusedValues {
 }
 
 struct ContentView: View {
-	@State private var notes: [Note] = []
-	@State private var selectedNote: Note? = nil
-	@State private var fileMessage = ""
-	@State private var noteText: String = ""
-	@State private var saveMessage: String = ""
-	@State private var fontSize: CGFloat = 14
-	@State private var showingFilePicker = false
+    @State private var notes: [Note] = []
+    @State private var selectedNoteID: Note.ID? = nil
+    @State private var fontSize: CGFloat = 14
+    @State private var showingFilePicker = false
 
-	let manager = FileManager.default
+    let manager = FileManager.default
 
-	var fileURL: URL{
-		let docs = manager.urls(for: .documentDirectory, in: .userDomainMask).first!
-		return docs.appendingPathComponent("notes.json", conformingTo: .plainText)
-	}
+    var fileURL: URL {
+        let docs = manager.urls(for: .documentDirectory, in: .userDomainMask).first!
+        return docs.appendingPathComponent("notes.json")
+    }
 
     var body: some View {
+        NavigationSplitView {
+            List(selection: $selectedNoteID) {
+                ForEach(notes) { note in
+                    Text(note.title.isEmpty ? "Untitled" : note.title)
+                        .tag(note.id)
+                }
+                .onDelete { indexSet in
+                    notes.remove(atOffsets: indexSet)
+                }
+            }
+            .navigationTitle("Notes")
+            .safeAreaInset(edge: .bottom) {
+                Divider()
+                Button(action: addNote) {
+                    Label("New Note", systemImage: "plus")
+                }
+                .buttonStyle(.borderless)
+                .padding(8)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            }
+        } detail: {
+            if let id = selectedNoteID,
+               let index = notes.firstIndex(where: { $0.id == id }) {
+                VStack(alignment: .leading, spacing: 8) {
+                    TextField("Title", text: $notes[index].title)
+                        .textFieldStyle(.plain)
+                        .font(.title2.bold())
 
-        VStack {
-			// NOTE: in Swift, String data-type holds unformatted string data only. Formatting info is saved as metadata (eg: index 0:5=>Bold, 6:8:Italic, etc) along with the text. To do that use AttributedString var instead of String var
+                    Divider()
 
-			TextEditor(text: $noteText)
-				.font(.system(size: fontSize))
-				.border(Color.gray)
-				.frame(minWidth: 600.0, minHeight: 400.0)
+                    TextEditor(text: $notes[index].note)
+                        .font(.system(size: fontSize))
+                }
+                .padding()
+            } else {
+                Text("Select or create a note")
+                    .foregroundStyle(.secondary)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+            }
         }
         .focusedSceneValue(\.noteActions, NoteActions(
-            save: saveNote,
-            saveAs: saveNoteAs,
+            save: saveNotes,
+            saveAs: saveCurrentNoteAs,
             openNote: openNote,
             increaseFontSize: increaseFontSize,
-            decreaseFontSize: decreaseFontSize
+            decreaseFontSize: decreaseFontSize,
+            addNote: addNote
         ))
         .fileImporter(
             isPresented: $showingFilePicker,
@@ -69,126 +99,84 @@ struct ContentView: View {
                 guard url.startAccessingSecurityScopedResource() else { return }
                 defer { url.stopAccessingSecurityScopedResource() }
                 do {
-                    noteText = try String(contentsOf: url, encoding: .utf8)
-                    saveMessage = "Opened file at: \(url.path())"
+                    let content = try String(contentsOf: url, encoding: .utf8)
+                    let title = url.deletingPathExtension().lastPathComponent
+                    let note = Note(title: title, note: content)
+                    notes.append(note)
+                    selectedNoteID = note.id
                 } catch {
-                    saveMessage = "Failed to open file: \(error.localizedDescription)"
+                    print("Failed to open file: \(error.localizedDescription)")
                 }
             case .failure(let error):
-                saveMessage = "Failed to open file: \(error.localizedDescription)"
+                print("Failed to open file: \(error.localizedDescription)")
             }
         }
-
-		HStack{
-			// system symbols: command + shift + L
-			Button(action: saveNote){
-				Label("Save", systemImage: "square.and.arrow.down.fill")
-			}.buttonStyle(.borderedProminent)
-
-			Button(action: saveNoteAs){
-				Label("Save As", systemImage: "square.and.arrow.down.badge.checkmark.fill")
-			}.buttonStyle(.borderedProminent)
-
-			Button(action: loadNote){
-				Label("Load", systemImage: "document.circle.fill")
-			}.buttonStyle(.borderedProminent)
-
-			Button(action: revealInFinder){
-				Label("Reveal in Finder", systemImage: "folder.fill")
-			}.buttonStyle(.borderedProminent)
-		}
-		Text(saveMessage)
-			.font(.caption)
-			.foregroundStyle(.green)
-
-        .padding()
-		.onAppear{} // this gets called whenever this view appears, i.e. whenever we navigate to this screen. It triggers every time we switch away from this view and come back to this view. It's not always one-time per app runtime (except for cases when a view is always shown only once in an app lifecycle)
+        .onAppear {
+            loadNotes()
+        }
+        .onChange(of: notes) {
+            saveNotes()
+        }
     }
-	
-	func saveNote(){
-		do{
-			try noteText.write(to: fileURL, atomically: true, encoding: .utf8)
-			// TODO: add a popup to let the user know the path where the note was saved
-			let saveText = "Note saved at: \(fileURL.path())"
-			saveMessage = saveText
-			print(saveText)
-		}catch{
-			// TODO: add a popup to show the error to the user
-			let saveText = "Failed to save note: \(error.localizedDescription)"
-			saveMessage = saveText
-			print(saveText)
-		}
-	}
 
-	func loadNote(){
-		if manager.fileExists(atPath: fileURL.path){
-			do{
-				noteText = try String(contentsOf: fileURL, encoding: .utf8)
+    func addNote() {
+        let note = Note(title: "", note: "")
+        notes.append(note)
+        selectedNoteID = note.id
+    }
 
-				// TODO: add a popup to show the success msg to the user
-				let loadText = "Successfully loaded from file at: \(fileURL.path())"
-				saveMessage = loadText
-				print(loadText)
-			}catch{
-				// TODO: add a popup to show the error to the user
-				let loadText = "Load failed: \(error.localizedDescription)"
-				saveMessage = loadText
-				print(loadText)
-			}
-		} else {
-			// TODO: add a popup to show the error to the user
-			let loadText = "No save file found at: \(fileURL.path())"
-			saveMessage = loadText
-			print(loadText)
-		}
-	}
+    func saveNotes() {
+        do {
+            let data = try JSONEncoder().encode(notes)
+            try data.write(to: fileURL, options: .atomic)
+        } catch {
+            print("Failed to save notes: \(error.localizedDescription)")
+        }
+    }
 
-	func saveNoteAs(){
-		let panel = NSSavePanel()
-		panel.title = "Save Note As"
-		panel.showsHiddenFiles = true
-		panel.nameFieldStringValue = "Untitled.txt"
-		panel.allowedContentTypes = [.plainText]
-		panel.allowsOtherFileTypes = true
-		panel.canCreateDirectories = true
+    func loadNotes() {
+        guard manager.fileExists(atPath: fileURL.path) else { return }
+        do {
+            let data = try Data(contentsOf: fileURL)
+            notes = try JSONDecoder().decode([Note].self, from: data)
+            if selectedNoteID == nil {
+                selectedNoteID = notes.first?.id
+            }
+        } catch {
+            print("Failed to load notes: \(error.localizedDescription)")
+        }
+    }
 
-		panel.begin(){ response in
-			guard response == .OK, let url = panel.url else{
-				return
-			}
-			do {
-				try noteText.write(to: url, atomically: true, encoding: .utf8)
-				let saveText = "Note saved at: \(url.path())"
-				saveMessage = saveText
-				print(saveText)
-			} catch {
-				let saveText = "Failed to save note: \(error.localizedDescription)"
-				saveMessage = saveText
-				print(saveText)
-			}
-		}
-	}
+    // Exports the selected note as a plain text file via a save panel
+    func saveCurrentNoteAs() {
+        guard let id = selectedNoteID,
+              let note = notes.first(where: { $0.id == id }) else { return }
+        let panel = NSSavePanel()
+        panel.title = "Export Note"
+        panel.nameFieldStringValue = "\(note.title.isEmpty ? "Untitled" : note.title).txt"
+        panel.allowedContentTypes = [.plainText]
+        panel.canCreateDirectories = true
+        panel.begin { response in
+            guard response == .OK, let url = panel.url else { return }
+            do {
+                try note.note.write(to: url, atomically: true, encoding: .utf8)
+            } catch {
+                print("Failed to export note: \(error.localizedDescription)")
+            }
+        }
+    }
 
-	func openNote() {
-		showingFilePicker = true
-	}
+    func openNote() {
+        showingFilePicker = true
+    }
 
-	func increaseFontSize() {
-		fontSize = min(fontSize + 2, 72)
-	}
+    func increaseFontSize() {
+        fontSize = min(fontSize + 2, 72)
+    }
 
-	func decreaseFontSize() {
-		fontSize = max(fontSize - 2, 8)
-	}
-
-	func revealInFinder(){
-		if manager.fileExists(atPath: fileURL.path){
-			NSWorkspace.shared.activateFileViewerSelecting([fileURL])
-		} else {
-			let folderURL = fileURL.deletingLastPathComponent()
-			NSWorkspace.shared.activateFileViewerSelecting([folderURL])
-		}
-	}
+    func decreaseFontSize() {
+        fontSize = max(fontSize - 2, 8)
+    }
 }
 
 #Preview {

@@ -19,11 +19,16 @@ struct MyNotesAppApp: App {
 		.commands{
 			// File -> New Note Window, New Note Tab, Open Note, Save Note, Save Note As, Share Note, Print Note
 			CommandGroup(replacing: .newItem) {
+				// New Note
+				Button("New Note"){
+					noteActions?.addNote()
+				}.keyboardShortcut("n", modifiers: .command)
+
 				// New Note Window
 				Button("New Note Window"){
 					openWindow(id: "note")
-				}.keyboardShortcut("n", modifiers: .command)
-				
+				}.keyboardShortcut("n", modifiers: [.command, .shift])
+
 				// New Note Tab
 				Button("New Note Tab"){
 					// action to create a new note tab

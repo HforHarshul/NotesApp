@@ -62,14 +62,20 @@ struct ContentView: View {
                             .foregroundStyle(.secondary)
                     }
                     .tag(note.id)
-                }
-                .onDelete { indexSet in
-                    let idsToDelete = indexSet.map { filteredNotes[$0].id }
-                    notes.removeAll { idsToDelete.contains($0.id) }
+                    .contextMenu {
+                        Button(role: .destructive) {
+                            deleteNote(id: note.id)
+                        } label: {
+                            Label("Delete Note", systemImage: "trash")
+                        }
+                    }
                 }
             }
             .searchable(text: $searchText, placement: .sidebar, prompt: "Search notes")
             .navigationTitle("Notes")
+            .onDeleteCommand {
+                if let id = selectedNoteID { deleteNote(id: id) }
+            }
             .safeAreaInset(edge: .bottom) {
                 Divider()
                 Button(action: addNote) {
@@ -155,6 +161,12 @@ struct ContentView: View {
         Calendar.current.isDateInToday(date)
             ? date.formatted(date: .omitted, time: .shortened)
             : date.formatted(date: .abbreviated, time: .omitted)
+    }
+
+    func deleteNote(id: Note.ID) {
+        guard let index = notes.firstIndex(where: { $0.id == id }) else { return }
+        notes.remove(at: index)
+        selectedNoteID = notes.isEmpty ? nil : notes[min(index, notes.count - 1)].id
     }
 
     func addNote() {

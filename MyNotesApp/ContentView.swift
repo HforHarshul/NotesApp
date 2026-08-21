@@ -33,6 +33,15 @@ struct ContentView: View {
     @State private var selectedNoteID: Note.ID? = nil
     @State private var fontSize: CGFloat = 14
     @State private var showingFilePicker = false
+    @State private var searchText = ""
+
+    var filteredNotes: [Note] {
+        if searchText.isEmpty { return notes }
+        return notes.filter {
+            $0.title.localizedCaseInsensitiveContains(searchText) ||
+            $0.note.localizedCaseInsensitiveContains(searchText)
+        }
+    }
 
     let manager = FileManager.default
 
@@ -44,14 +53,16 @@ struct ContentView: View {
     var body: some View {
         NavigationSplitView {
             List(selection: $selectedNoteID) {
-                ForEach(notes) { note in
+                ForEach(filteredNotes) { note in
                     Text(note.title.isEmpty ? "Untitled" : note.title)
                         .tag(note.id)
                 }
                 .onDelete { indexSet in
-                    notes.remove(atOffsets: indexSet)
+                    let idsToDelete = indexSet.map { filteredNotes[$0].id }
+                    notes.removeAll { idsToDelete.contains($0.id) }
                 }
             }
+            .searchable(text: $searchText, placement: .sidebar, prompt: "Search notes")
             .navigationTitle("Notes")
             .safeAreaInset(edge: .bottom) {
                 Divider()

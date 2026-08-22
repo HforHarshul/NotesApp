@@ -15,6 +15,7 @@ struct NoteActions {
     var increaseFontSize: () -> Void
     var decreaseFontSize: () -> Void
     var addNote: () -> Void
+    var shareNote: () -> Void
 }
 
 struct NoteActionsKey: FocusedValueKey {
@@ -114,6 +115,14 @@ struct ContentView: View {
                         .frame(maxWidth: .infinity, alignment: .trailing)
                 }
                 .padding()
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        ShareLink(
+                            item: notes[index].note,
+                            subject: Text(notes[index].title.isEmpty ? "Untitled" : notes[index].title)
+                        )
+                    }
+                }
             } else {
                 Text("Select or create a note")
                     .foregroundStyle(.secondary)
@@ -126,7 +135,8 @@ struct ContentView: View {
             openNote: openNote,
             increaseFontSize: increaseFontSize,
             decreaseFontSize: decreaseFontSize,
-            addNote: addNote
+            addNote: addNote,
+            shareNote: shareNote
         ))
         .fileImporter(
             isPresented: $showingFilePicker,
@@ -218,6 +228,14 @@ struct ContentView: View {
 
     func openNote() {
         showingFilePicker = true
+    }
+
+    func shareNote() {
+        guard let id = selectedNoteID,
+              let note = notes.first(where: { $0.id == id }),
+              let contentView = NSApp.keyWindow?.contentView else { return }
+        let picker = NSSharingServicePicker(items: [note.note])
+        picker.show(relativeTo: contentView.bounds, of: contentView, preferredEdge: .minY)
     }
 
     func increaseFontSize() {

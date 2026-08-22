@@ -16,120 +16,52 @@ struct MyNotesAppApp: App {
         WindowGroup(id: "note") {
             ContentView()
         }
-		.commands{
-			// File -> New Note Window, New Note Tab, Open Note, Save Note, Save Note As, Share Note, Print Note
-			CommandGroup(replacing: .newItem) {
-				// New Note
-				Button("New Note"){
-					noteActions?.addNote()
-				}.keyboardShortcut("n", modifiers: .command)
+        .commands {
+            CommandGroup(replacing: .newItem) {
+                Button("New Note") {
+                    noteActions?.addNote()
+                }.keyboardShortcut("n", modifiers: .command)
 
-				// New Note Window
-				Button("New Note Window"){
-					openWindow(id: "note")
-				}.keyboardShortcut("n", modifiers: [.command, .shift])
-
-				// New Note Tab
-				Button("New Note Tab"){
-					// action to create a new note tab
-				}.keyboardShortcut("t", modifiers: .command)
-				
-				Divider()
-				
-				// Open Note
-				Button("Open Note"){
-					noteActions?.openNote()
-				}.keyboardShortcut("o", modifiers: .command)
-				
-				Divider()
-				
-				// Save Note
-				Button("Save Note"){
-					noteActions?.save()
-				}.keyboardShortcut("s", modifiers: .command)
-
-				// Save Note As
-				Button("Save Note As"){
-					noteActions?.saveAs()
-				}.keyboardShortcut("s", modifiers: [.command, .shift])
-				
-				Divider()
-				
-				// Share Note
-				Button("Share Note"){
-					// action to trigger the Share popup
-				}.keyboardShortcut("s", modifiers: .control)
-				
-				// Print Note
-				Button("Print Note"){
-					// action to trigger the Print popup
-				}.keyboardShortcut("p", modifiers: .command)
+                Button("New Note Window") {
+                    openWindow(id: "note")
+                }.keyboardShortcut("n", modifiers: [.command, .shift])
 
                 Divider()
-			}
 
+                Button("Open Note") {
+                    noteActions?.openNote()
+                }.keyboardShortcut("o", modifiers: .command)
 
-			// Edit -> add Find, Find and Replace options
-			CommandGroup(after: .textEditing) {
-				Divider()
-				
-				// Find
-				Button("Find"){
-					// action to find a text in the note text
-				}.keyboardShortcut("f", modifiers: .command)
-				
-				// Find and Replace
-				Button("Find and Replace"){
-					// action to find and replace a text in the note text
-				}.keyboardShortcut("f", modifiers: [.option, .command])
-				
-				Divider()
-			}
+                Divider()
 
-            // Format -> Font, Font Size, Font Style (bold/italic/etc)
-			CommandMenu("Format"){
-				// Font - figure this out later
-//				CommandMenu("Format") {
-//					Picker("Font", selection: $fontName) {
-//						Text("System").tag("System")
-//						Text("Georgia").tag("Georgia")
-//						Text("Helvetica").tag("Helvetica")
-//						Text("Courier New").tag("Courier New")
-//					}
-//				}
+                Button("Save Note") {
+                    noteActions?.save()
+                }.keyboardShortcut("s", modifiers: .command)
 
-				
-				// Font Size
-				Menu("Font Size"){
-					Button("Increase") {
-						noteActions?.increaseFontSize()
-					}.keyboardShortcut("+", modifiers: .command)
+                Button("Save Note As") {
+                    noteActions?.saveAs()
+                }.keyboardShortcut("s", modifiers: [.command, .shift])
 
-					Button("Decrease") {
-						noteActions?.decreaseFontSize()
-					}.keyboardShortcut("-", modifiers: .command)
-				}
-				
-				// Font Style
-				Menu("Font Style"){
-					// action to apply styling like bold/italic/etc to selected text -> sub menu with these options
-					Button("Bold") {
-						// implementation
-					}
+                Divider()
 
-					Button("Italic") {
-						// implementation
-					}
+                Button("Share Note") {
+                    noteActions?.shareNote()
+                }
 
-					Button("Underline") {
-						// implementation
-					}
+                Divider()
+            }
 
-					Button("Strikethrough") {
-						// implementation
-					}
-				}
-			}
-		}
+            CommandMenu("Format") {
+                Menu("Font Size") {
+                    Button("Increase") {
+                        noteActions?.increaseFontSize()
+                    }.keyboardShortcut("+", modifiers: .command)
+
+                    Button("Decrease") {
+                        noteActions?.decreaseFontSize()
+                    }.keyboardShortcut("-", modifiers: .command)
+                }
+            }
+        }
     }
 }
